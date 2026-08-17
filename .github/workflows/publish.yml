@@ -298,7 +298,7 @@ jobs:
           package-path: packages/cli
 
       - name: Commit changes
-        uses: EndBug/add-and-commit@v9
+        uses: EndBug/add-and-commit@v11
         with:
           message: "[SKIP CI] Prerelease"
           default_author: github_actions
