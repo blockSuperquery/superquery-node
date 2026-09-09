@@ -7,7 +7,7 @@
 
 <p align="center">
   <a href="#status"><img src="https://img.shields.io/badge/status-pre--alpha-orange" alt="Status: pre-alpha"></a>
-  <img src="https://img.shields.io/badge/rust-1.82%2B-93450a" alt="Rust 1.82+">
+  <img src="https://img.shields.io/badge/rust-1.95%2B-93450a" alt="Rust 1.95+">
   <img src="https://img.shields.io/badge/license-GPL--3.0-blue" alt="GPL-3.0">
 </p>
 
@@ -90,7 +90,8 @@ This is enforced, not merely documented — see
 
 ## Building
 
-Needs a recent stable Rust (MSRV 1.82).
+Needs a recent stable Rust. The floor is **1.95**, set by wasmtime's cranelift
+backend rather than by anything in this repository.
 
 ```bash
 cargo build --workspace

@@ -1,19 +1,38 @@
-# To get started with Dependabot version updates, you'll need to specify which
-# package ecosystems to update and where the package manifests are located.
-# Please see the documentation for all configuration options:
-# https://docs.github.com/code-security/dependabot/dependabot-version-updates/configuration-options-for-the-dependabot.yml-file
+# Dependabot configuration.
+#
+# This repository is pure Rust. The previous npm configuration scanned `/` and
+# `/packages/*` for package.json files that no longer exist, which is why npm
+# advisories kept being reported against a repository with no JavaScript in it.
 
 version: 2
 updates:
-  - package-ecosystem: "npm" # See documentation for possible values
-    directories: # Location of package manifests
-      - "/"
-      - "/packages/*"
-    schedule:
-      interval: "weekly"
-  - package-ecosystem: "github-actions"
-    # Workflow files stored in the default location of `.github/workflows`
-    # You don't need to specify `/.github/workflows` for `directory`. You can use `directory: "/"`.
+  - package-ecosystem: "cargo"
     directory: "/"
     schedule:
       interval: "weekly"
+    open-pull-requests-limit: 10
+    groups:
+      # One PR per ecosystem cluster rather than per crate. alloy and wasmtime
+      # each publish a dozen crates that must move together, and reviewing them
+      # separately is both noisy and misleading.
+      alloy:
+        patterns: ["alloy", "alloy-*"]
+      wasmtime:
+        patterns: ["wasmtime", "wasmtime-*", "cranelift-*"]
+      tokio:
+        patterns: ["tokio", "tokio-*", "tower", "tower-*", "hyper", "hyper-*"]
+      postgres:
+        patterns: ["tokio-postgres", "deadpool-postgres", "postgres-*"]
+      minor-and-patch:
+        # Everything else, non-breaking only. Majors still arrive individually so
+        # they get read rather than rubber-stamped.
+        patterns: ["*"]
+        update-types: ["minor", "patch"]
+
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    groups:
+      actions:
+        patterns: ["*"]

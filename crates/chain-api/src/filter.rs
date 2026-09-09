@@ -59,7 +59,7 @@ impl BlockFilter {
     pub fn matches_height(&self, height: u64) -> bool {
         match self.modulo {
             Some(0) | None => true,
-            Some(m) => height % m == 0,
+            Some(m) => height.is_multiple_of(m),
         }
     }
 }

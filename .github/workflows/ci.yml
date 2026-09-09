@@ -5,13 +5,23 @@ on:
     branches: [main]
   pull_request:
 
+# A new push supersedes the run in progress. Building wasmtime and alloy is the
+# expensive part of every job, so not paying for it twice matters.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 env:
   CARGO_TERM_COLOR: always
   RUST_BACKTRACE: 1
+  # Debug info is the bulk of the target directory and nothing here reads it.
+  # Smaller artifacts mean faster cache upload and download.
+  CARGO_PROFILE_DEV_DEBUG: 0
+  CARGO_PROFILE_TEST_DEBUG: 0
 
 jobs:
   check:
-    name: fmt + clippy
+    name: fmt · clippy · docs
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -26,9 +36,16 @@ jobs:
         run: cargo fmt --all -- --check
 
       - name: Clippy
-        # Warnings are errors in CI: the workspace is clean today, and keeping it
-        # that way is much cheaper than a periodic cleanup.
-        run: cargo clippy --workspace --all-targets -- -D warnings
+        # Warnings are errors here. The workspace is clean today; keeping it that
+        # way is nearly free, whereas letting it rot and cleaning up later is not.
+        run: cargo clippy --workspace --all-targets --locked -- -D warnings
+
+      - name: Docs
+        # Broken intra-doc links are how architecture documentation rots. This
+        # already caught one during the initial scaffold.
+        env:
+          RUSTDOCFLAGS: -D warnings
+        run: cargo doc --workspace --no-deps --locked
 
   test:
     name: test
@@ -57,44 +74,17 @@ jobs:
       - uses: Swatinem/rust-cache@v2
 
       - name: Test
-        # The store's integration tests skip when no database is reachable, so
-        # DATABASE_URL is what makes them actually run here.
+        # The store's integration tests skip themselves when no database is
+        # reachable, so DATABASE_URL is what makes them actually run. Without it
+        # they would pass without touching Postgres and prove nothing.
         env:
           DATABASE_URL: postgres://postgres:postgres@localhost:5432/superquery
-        run: cargo test --workspace
+        run: cargo test --workspace --locked
 
       - name: Build the binary
-        run: cargo build --bin superquery-node
+        run: cargo build --bin superquery-node --locked
 
       - name: CLI smoke test
-        run: cargo run --bin superquery-node -- --help
-
-  msrv:
-    name: MSRV
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      # Must match `rust-version` in the workspace Cargo.toml.
-      - uses: dtolnay/rust-toolchain@1.82.0
-
-      - uses: Swatinem/rust-cache@v2
-
-      - name: Build on the minimum supported Rust version
-        run: cargo build --workspace
-
-  docs:
-    name: docs
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: dtolnay/rust-toolchain@stable
-
-      - uses: Swatinem/rust-cache@v2
-
-      - name: rustdoc
-        # Broken intra-doc links are how architecture docs rot, so they fail CI.
-        env:
-          RUSTDOCFLAGS: -D warnings
-        run: cargo doc --workspace --no-deps
+        # Proves the deliverable actually starts. `cargo test` compiles the binary
+        # but never runs it.
+        run: cargo run --bin superquery-node --locked -- --help

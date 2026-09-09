@@ -32,7 +32,7 @@ members = [
 [workspace.package]
 version = "0.1.0"
 edition = "2021"
-rust-version = "1.82"
+rust-version = "1.95"
 license = "GPL-3.0"
 authors = ["SuperQuery contributors"]
 repository = "https://github.com/blockSuperquery/superquery-node"
