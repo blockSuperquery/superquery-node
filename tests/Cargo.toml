@@ -1,0 +1,48 @@
+# Workspace-level integration tests.
+#
+# A package of its own so `tests/` in the guide's §5 layout is actually compiled:
+# a bare `tests/` directory at the workspace root belongs to no package and cargo
+# would never run it.
+#
+# Tests that need only one crate live beside that crate. These are the ones that
+# span crates or assert properties of the workspace itself.
+
+[package]
+name = "superquery-integration-tests"
+description = "Cross-crate integration tests for superquery-node"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+publish = false
+
+# No library; this package exists only for its tests.
+[lib]
+path = "lib.rs"
+
+[[test]]
+name = "crate_boundaries"
+path = "integration/crate_boundaries.rs"
+
+[[test]]
+name = "pipeline_ordering"
+path = "integration/pipeline_ordering.rs"
+
+[dependencies]
+
+[dev-dependencies]
+superquery-chain-api.workspace = true
+superquery-chain-evm.workspace = true
+superquery-config.workspace = true
+superquery-core.workspace = true
+superquery-dispatcher.workspace = true
+superquery-runtime.workspace = true
+superquery-store.workspace = true
+
+serde_json.workspace = true
+tokio.workspace = true
+
+[lints]
+workspace = true

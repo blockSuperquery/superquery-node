@@ -1,0 +1,29 @@
+[package]
+name = "superquery-store"
+description = "PostgreSQL persistence for the SuperQuery indexer"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+
+[dependencies]
+superquery-chain-api.workspace = true
+superquery-config.workspace = true
+
+async-trait.workspace = true
+chrono.workspace = true
+deadpool-postgres.workspace = true
+graphql-parser.workspace = true
+regex.workspace = true
+serde_json.workspace = true
+thiserror.workspace = true
+tokio-postgres.workspace = true
+tracing.workspace = true
+
+[dev-dependencies]
+tokio.workspace = true
+
+[lints]
+workspace = true

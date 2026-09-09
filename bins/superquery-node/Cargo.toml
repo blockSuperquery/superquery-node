@@ -1,0 +1,33 @@
+[package]
+name = "superquery-node"
+description = "SuperQuery blockchain indexing engine"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+default-run = "superquery-node"
+
+[[bin]]
+name = "superquery-node"
+path = "src/main.rs"
+
+[dependencies]
+superquery-chain-api.workspace = true
+superquery-chain-evm.workspace = true
+superquery-config.workspace = true
+superquery-core.workspace = true
+superquery-dispatcher.workspace = true
+superquery-runtime.workspace = true
+superquery-store.workspace = true
+
+anyhow.workspace = true
+clap.workspace = true
+dotenvy.workspace = true
+tokio.workspace = true
+tracing.workspace = true
+tracing-subscriber.workspace = true
+
+[lints]
+workspace = true

@@ -1,80 +1,105 @@
-# SubQuery — Rust workspace
+# SuperQuery Node — Rust workspace
 #
-# This Cargo workspace lives alongside the TypeScript monorepo in `packages/`.
-# We port package-by-package (strangler-fig): a `crates/*` member replaces its
-# `packages/*` counterpart only once it passes the same test vectors. Nothing in
-# `packages/` is deleted until its Rust replacement is proven in production.
+# Layout and crate responsibilities follow
+# `.claude/docs/SUPERQUERY_NODE_IMPLEMENTATION_GUIDE.md` §5.
 #
-# Dependency edges below mirror the TS package graph:
-#   types-core → types
-#   utils, types-core → common → common-substrate
-#   common, utils, types(-core) → node-core → node
-#   utils, common → query
-#   common, utils → cli
+# Dependency direction (enforced by these manifests):
+#
+#   chain-api  <- core, dispatcher, chains/*, bins
+#   config     <- store, core, bins
+#   store      <- core, dispatcher, bins
+#   runtime    <- core, bins
+#   core       <- dispatcher, bins
+#   chains/*   <- bins only
+#
+# Hard invariant (guide Milestone 3): `superquery-core` must never depend on a
+# chain SDK. `tests/integration/crate_boundaries.rs` asserts this.
 
 [workspace]
 resolver = "2"
 members = [
-    "crates/subql-utils",
-    "crates/subql-types-core",
-    "crates/subql-types",
-    "crates/subql-common",
-    "crates/subql-common-substrate",
-    "crates/subql-config",
-    "crates/subql-store",
-    "crates/subql-node-core",
-    "crates/subql-node",
-    "crates/subql-query",
-    "crates/subql-cli",
+    "crates/chain-api",
+    "crates/config",
+    "crates/store",
+    "crates/core",
+    "crates/dispatcher",
+    "crates/runtime",
+    "crates/chains/evm",
+    "bins/superquery-node",
+    "tests",
 ]
 
 [workspace.package]
 version = "0.1.0"
 edition = "2021"
-rust-version = "1.80"
+rust-version = "1.82"
 license = "GPL-3.0"
-authors = ["SubQuery Pte Ltd authors & contributors"]
-repository = "https://github.com/subquery/subql"
+authors = ["SuperQuery contributors"]
+repository = "https://github.com/blockSuperquery/superquery-node"
 
-# Shared dependency pins. Add real crates here as ports need them; keeping them
-# centralized avoids version drift across the workspace.
 [workspace.dependencies]
-# internal crates (path deps)
-subql-utils = { path = "crates/subql-utils" }
-subql-types-core = { path = "crates/subql-types-core" }
-subql-types = { path = "crates/subql-types" }
-subql-common = { path = "crates/subql-common" }
-subql-common-substrate = { path = "crates/subql-common-substrate" }
-subql-config = { path = "crates/subql-config" }
-subql-store = { path = "crates/subql-store" }
-subql-node-core = { path = "crates/subql-node-core" }
+# --- internal ---
+superquery-chain-api = { path = "crates/chain-api" }
+superquery-config = { path = "crates/config" }
+superquery-store = { path = "crates/store" }
+superquery-core = { path = "crates/core" }
+superquery-dispatcher = { path = "crates/dispatcher" }
+superquery-runtime = { path = "crates/runtime" }
+superquery-chain-evm = { path = "crates/chains/evm" }
 
-# third-party — versions verified on crates.io 2026-07-08 (see task plan §5)
-tokio = { version = "1.52", features = ["full"] }
+# --- third-party (versions verified on crates.io 2026-09-09, see task plan §5) ---
+tokio = { version = "1.53", features = ["full"] }
+tokio-util = "0.7"
+futures = "0.3"
 async-trait = "0.1"
+
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
-anyhow = "1.0"
+serde_yaml = "0.9"
+
 thiserror = "2.0"
+anyhow = "1.0"
+
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter", "json"] }
+
 clap = { version = "4.6", features = ["derive", "env"] }
 dotenvy = "0.15"
-tracing = "0.1"
-tracing-subscriber = { version = "0.3", features = ["env-filter"] }
-tokio-postgres = "0.7"
+
+# Postgres: raw SQL over tokio-postgres rather than sqlx — entity SQL is generated
+# at runtime from each project's GraphQL schema, so sqlx's compile-time query
+# checking does not apply. Rationale in the task plan §4.1.
+tokio-postgres = { version = "0.7", features = ["with-chrono-0_4", "with-serde_json-1"] }
 deadpool-postgres = "0.14"
-reqwest = { version = "0.13", default-features = false, features = ["json", "http2", "charset", "rustls", "rustls-native-certs"] }
-moka = { version = "0.12", features = ["future"] }
-sha2 = "0.11"
-hex = "0.4"
-num-bigint = "0.5"
-bigdecimal = "0.4"
-chrono = { version = "0.4", features = ["serde"] }
+
 graphql-parser = "0.4"
-topological-sort = "0.2"
 regex = "1"
+chrono = { version = "0.4", features = ["serde"] }
+url = "2"
+hex = "0.4"
+sha2 = "0.10"
+
+# Mapping sandbox (guide §3.5). 49.x is still an RC; pin the newest stable.
+wasmtime = "48.0.1"
+
+# Admin/metrics surface (guide Milestone 13).
+axum = "0.8"
+tower = "0.5"
+prometheus-client = "0.25"
+
+# EVM adapter — permitted ONLY in crates/chains/evm.
+alloy = { version = "2.4", features = ["provider-http", "rpc-types-eth", "sol-types", "json-abi"] }
 
 [workspace.lints.rust]
 unsafe_code = "forbid"
+missing_docs = "warn"
+
+[workspace.lints.clippy]
+todo = "warn"
 
 [profile.release]
+lto = "thin"
+codegen-units = 1
+
+[profile.bench]
 lto = "thin"

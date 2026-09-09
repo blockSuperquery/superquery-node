@@ -1,0 +1,27 @@
+[package]
+name = "superquery-core"
+description = "Chain-agnostic indexing engine for SuperQuery"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+
+[dependencies]
+# NOTE: no chain SDK may appear here. `superquery-chain-api` is the only chain
+# vocabulary this crate knows (guide Milestone 3). Asserted by
+# tests/integration/crate_boundaries.rs.
+superquery-chain-api.workspace = true
+superquery-config.workspace = true
+superquery-store.workspace = true
+
+async-trait.workspace = true
+futures.workspace = true
+serde_json.workspace = true
+thiserror.workspace = true
+tokio.workspace = true
+tracing.workspace = true
+
+[lints]
+workspace = true

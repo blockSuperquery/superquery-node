@@ -1,0 +1,39 @@
+# Local development stack: a PostgreSQL for the indexer to write to.
+#
+#   docker compose -f docker/docker-compose.yml up -d
+#   export DATABASE_URL=postgres://postgres:postgres@localhost:5432/superquery
+#   cargo test --workspace
+#
+# The store's integration tests skip when no database is reachable, so bringing
+# this up is what makes them actually run.
+
+services:
+  postgres:
+    image: postgres:17-alpine
+    container_name: superquery-postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: superquery
+    ports:
+      - "5432:5432"
+    volumes:
+      - superquery-pgdata:/var/lib/postgresql/data
+    healthcheck:
+      # Depending services wait for this rather than for the container to exist —
+      # Postgres accepts connections a little after the process starts.
+      test: ["CMD-SHELL", "pg_isready -U postgres -d superquery"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    command:
+      # Indexing is write-heavy and bursty; the defaults are tuned for a much
+      # smaller working set than a catching-up indexer produces.
+      - postgres
+      - -c
+      - shared_buffers=512MB
+      - -c
+      - max_connections=200
+
+volumes:
+  superquery-pgdata:
