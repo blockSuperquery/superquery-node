@@ -1,0 +1,100 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+env:
+  CARGO_TERM_COLOR: always
+  RUST_BACKTRACE: 1
+
+jobs:
+  check:
+    name: fmt + clippy
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+
+      - uses: Swatinem/rust-cache@v2
+
+      - name: Formatting
+        run: cargo fmt --all -- --check
+
+      - name: Clippy
+        # Warnings are errors in CI: the workspace is clean today, and keeping it
+        # that way is much cheaper than a periodic cleanup.
+        run: cargo clippy --workspace --all-targets -- -D warnings
+
+  test:
+    name: test
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: superquery
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - uses: Swatinem/rust-cache@v2
+
+      - name: Test
+        # The store's integration tests skip when no database is reachable, so
+        # DATABASE_URL is what makes them actually run here.
+        env:
+          DATABASE_URL: postgres://postgres:postgres@localhost:5432/superquery
+        run: cargo test --workspace
+
+      - name: Build the binary
+        run: cargo build --bin superquery-node
+
+      - name: CLI smoke test
+        run: cargo run --bin superquery-node -- --help
+
+  msrv:
+    name: MSRV
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # Must match `rust-version` in the workspace Cargo.toml.
+      - uses: dtolnay/rust-toolchain@1.82.0
+
+      - uses: Swatinem/rust-cache@v2
+
+      - name: Build on the minimum supported Rust version
+        run: cargo build --workspace
+
+  docs:
+    name: docs
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - uses: Swatinem/rust-cache@v2
+
+      - name: rustdoc
+        # Broken intra-doc links are how architecture docs rot, so they fail CI.
+        env:
+          RUSTDOCFLAGS: -D warnings
+        run: cargo doc --workspace --no-deps

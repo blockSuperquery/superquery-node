@@ -1,7 +1,0 @@
-undecided:
-  - "@subql/cli"
-  - "@subql/common-substrate"
-  - "@subql/node"
-  - "@subql/node-core"
-  - "@subql/query"
-  - "@subql/utils"

@@ -1,0 +1,23 @@
+[package]
+name = "superquery-runtime"
+description = "WebAssembly mapping runtime for the SuperQuery indexer"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+
+[dependencies]
+superquery-chain-api.workspace = true
+superquery-store.workspace = true
+
+async-trait.workspace = true
+serde = { workspace = true }
+serde_json.workspace = true
+thiserror.workspace = true
+tracing.workspace = true
+wasmtime.workspace = true
+
+[lints]
+workspace = true

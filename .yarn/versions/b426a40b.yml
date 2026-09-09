@@ -1,5 +1,0 @@
-undecided:
-  - "@subql/common"
-  - "@subql/node-core"
-  - "@subql/types"
-  - "@subql/types-core"
