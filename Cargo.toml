@@ -82,7 +82,7 @@ hex = "0.4"
 sha2 = "0.10"
 
 # Mapping sandbox (guide §3.5). 49.x is still an RC; pin the newest stable.
-wasmtime = "48.0.1"
+wasmtime = "49.0.2"
 
 # Admin/metrics surface (guide Milestone 13).
 axum = "0.8"
